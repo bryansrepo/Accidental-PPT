@@ -32,15 +32,17 @@ foreach($site_urls as $url){
 
 	if(count($found_rows)> 0){
 		for($i = 0; $i < count($found_rows[2]); $i++){
-			$wts_decoded = html_entity_decode($found_rows[2][$i]);
-
-			$replaces = 0;
-			str_replace($keywords_to_skip, "AA", $wts_decoded, $replaces);
-			if($replaces > 0){
-				if($DEBUG) print "SKIPPING: {$wts_decoded}\n";
-				continue;
-			}
 			
+			if(count($keywords_to_skip)){
+				$wts_decoded = html_entity_decode($found_rows[2][$i]);
+				$replaces = 0;
+				str_replace($keywords_to_skip, "AA", $wts_decoded, $replaces);
+				if($replaces > 0){
+					if($DEBUG) print "SKIPPING: {$wts_decoded}\n";
+					continue;
+				}
+			}
+
 			$wts_decoded = html_entity_decode($found_rows[2][$i]);
 
 			$replaces = 0;
