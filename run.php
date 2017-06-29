@@ -24,17 +24,38 @@ if(file_exists($exclude_keyword_file)){
 }
 
 foreach($site_urls as $url){
+	if($url == "--") {
+		print "\n##########################################################\n\n";
+		continue;
+	}
+
+ 	$found_rows = [];
+ 	$found_titles = [];
+ 	$title_map = [];
+ 	
 	$buff = `curl -s --url '{$url}' `;
 
 	$str = preg_replace('|\s|', " ", $buff);
 
 	preg_match_all('|<td class="alt1" id="td_threadtitle_(\d+)" title=([^>]+)>|i', $str, $found_rows);
+	preg_match_all('|<a href="showthread\.php\?s=.+?&amp;t=(\d+)" id="thread_title_\d+">([^<]+?)</a>|i', $str, $found_titles);
 
+	// Create a map for the post titles
+	
+	foreach($found_titles[1] as $idx => $f){
+		$title_map[$f] = $found_titles[2][$idx];
+	}
+	
 	if(count($found_rows)> 0){
 		for($i = 0; $i < count($found_rows[2]); $i++){
+
+			$thread_id = $found_rows[1][$i];
 			
 			if(count($keywords_to_skip)){
-				$wts_decoded = html_entity_decode($found_rows[2][$i]);
+				if(isset($title_map[$thread_id])) $this_title =  $title_map[$thread_id];
+				else $this_title = "";
+				
+				$wts_decoded = html_entity_decode($this_title . " " . $found_rows[2][$i]);
 				$replaces = 0;
 				str_replace($keywords_to_skip, "AA", $wts_decoded, $replaces);
 				if($replaces > 0){
@@ -43,13 +64,13 @@ foreach($site_urls as $url){
 				}
 			}
 
-			$wts_decoded = html_entity_decode($found_rows[2][$i]);
+			$wts_decoded = html_entity_decode($this_title . " :: \n\n" . $found_rows[2][$i]);
 
 			$replaces = 0;
 			str_replace($keywords_to_watch, "AA", strtolower($wts_decoded), $replaces);
 			if($replaces > 0) {
 				$tidy_str = preg_replace('|\s+|', " ", $wts_decoded);
-				print "***\n{$tidy_str}\nhttp://www.calguns.net/calgunforum/showthread.php?t={$found_rows[1][$i]}\n\n";
+				print "***\n\n{$tidy_str}\n\nhttp://www.calguns.net/calgunforum/showthread.php?t={$thread_id}\n\n";
 			}
 		}
 	}
